@@ -27,6 +27,8 @@ from operator import itemgetter
 import re
 import logging
 import string
+import shutil
+
      
 LOG_FILENAME = 'sandby.log'
 logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
@@ -1802,11 +1804,8 @@ class sandbyActions(sandbyInitialize):
                 filenameprint = filename
             else:
                 filenameprint = filename.replace (os.getenv("HOME"), '~', 1)
-
-            buff = open(CHECKLISTS[checklist][1] , 'r').read()
-            file = open(filename, 'w+')
-            file.write(buff)
-            file.close()            
+   
+            shutil.copy2(CHECKLISTS[checklist][1], filename)
 
             self.set_widgets_sensitive(True)
             self.con = sqlite.connect(self.database_filename)
@@ -1818,11 +1817,8 @@ class sandbyActions(sandbyInitialize):
 
     def copy_database(self,filename):
         """copy (Save as database)"""
-        try :
-            buff=open(self.database_filename , 'r').read()
-            file = open(filename, 'w+')
-            file.write(buff)
-            file.close()
+        try :            
+            shutil.copy2(self.database_filename, filename)
             self.database_filename=filename
             self.con = None
             self.cur = None
@@ -1952,7 +1948,6 @@ class sandbyActions(sandbyInitialize):
            if os.path.exists(filename) ==True:
                if self.show_msg("A file named \"" + os.path.basename(filename) + "\" already exists.\nDo you want to replace it?", "The file already exists in \"" + os.path.dirname(filename) + "\". Replacing it will overwrite its contents.", "question", "yesno")==gtk.RESPONSE_YES:
 
-                   #self.create_database(filename)
                    self.copy_database(filename)
 
            else:
