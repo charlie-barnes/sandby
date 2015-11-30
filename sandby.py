@@ -72,7 +72,7 @@ class sandbyInitialize:
 
         #Setup the main window
         self.main_window = self.glade.get_object("main_window")
-        self.main_window.connect("destroy", gtk.main_quit)
+        self.main_window.connect("destroy", self.quit)
         self.main_window.connect("window-state-event", self.on_window_state_change)
         self.window_in_fullscreen = False
 
@@ -194,7 +194,7 @@ class sandbyActions(sandbyInitialize):
                "focus_out_count":self.focus_out_count,
                "changed_count":self.changed_count,
                "del_key":self.del_key,
-               "main_quit":self.main_quit
+               "quit":self.quit
               }
         self.glade.connect_signals(mdict)
 
@@ -581,11 +581,11 @@ class sandbyActions(sandbyInitialize):
                                    y = (bottombounds-bottomborder)-columnvalue, 
                                    width = columnwidth,
                                    height = columnvalue,
-				                           stroke_color = None,
+                                           stroke_color = None,
                                    fill_color = "#5f8fc2",
-				                           line_width = 0.0)
+                                           line_width = 0.0)
 
-        except:	
+        except:    
             logging.debug("goocanvas module not loaded - not responding to graphing request")
 
     def select_stats_mode(self, treeview):
@@ -1662,8 +1662,8 @@ class sandbyActions(sandbyInitialize):
         print_data = PrintData()
 
         print_data.text = "<small>Sandby Moth Recorder " + gobject.markup_escape_text(self.version) + "</small>\n\n"
-        print_data.text += "<b><big>" + gobject.markup_escape_text(self.database_name) + " - " + gobject.markup_escape_text(self.database_author) + "</big></b>\n"
-        print_data.text += gobject.markup_escape_text(self.database_description) + "\n"
+        print_data.text += "<b><big>" + gobject.markup_escape_text(self.glade.get_object("entry1").get_text()) + " - " + gobject.markup_escape_text(self.glade.get_object("entry3").get_text()) + "</big></b>\n"
+        print_data.text += gobject.markup_escape_text(self.glade.get_object("entry2").get_text()) + "\n"
 
         self.cur.execute("SELECT * FROM records ORDER BY date, species + 0.0")
 
@@ -1731,8 +1731,9 @@ class sandbyActions(sandbyInitialize):
        else:
            self.glade.get_object("calendar_window").hide()
 
-    def main_quit(self, widget):
+    def quit(self, widget):
         gtk.main_quit()
+        sys.exit()
 
     def dataset_properties(self, widget):
         self.glade.get_object("dataset_properties").show()
@@ -1838,16 +1839,10 @@ class sandbyActions(sandbyInitialize):
         dialog.set_property('skip-taskbar-hint', True)
 
         response = dialog.run()
+        self.database_filename=dialog.get_filename()
+        dialog.destroy()
 
         if response == gtk.RESPONSE_OK:
-            #self.close_database(None)
-            self.database_filename=dialog.get_filename()
-
-            dialog.destroy()
-
-   #          self.checklist_tables_store.clear()
-
-
             self.load_tables()
 
 
@@ -2208,19 +2203,35 @@ class sandbyActions(sandbyInitialize):
                 reader.next()
                 rowcount = 0;
 
+                species_codes = {}
+                
+                #grab the species codes
+                self.cur.execute("SELECT taxa.vernacular, taxa.code \
+                                  FROM taxa")
+
+                for rcd in self.cur:
+                   species_codes[rcd[0]] = rcd[1]
+                
+                #grab the species codes
+                self.cur.execute("SELECT taxa.scientific, taxa.code \
+                                  FROM taxa")
+
+                for rcd in self.cur:
+                   species_codes[rcd[0]] = rcd[1]
+
                 for row in reader:
 
                     date = row[0]
                     species = row[1]
-                    count = row[4]
+                    count = row[2]
    
                     rowcount += 1
 
                     try:
-                        sql="INSERT INTO records VALUES ('" + date + "', '" + species + "', '" + count + "');"
+                        sql="INSERT INTO records VALUES ('" + date + "', '" + species_codes[species] + "', '" + count + "');"
                         self.cur.execute(sql)
                     except:
-                        self.show_msg("Import Error", "Row " + str(rowcount), "error", "close")
+                        self.show_msg("Import Error", "Row " + str(rowcount) + ": " + ', '.join(row), "error", "close")
 
                 self.con.commit()
                 self.year_change(False)
