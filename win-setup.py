@@ -45,5 +45,5 @@ setup(
                   }
               },
 
-    data_files=[]
+    data_files=[('', ['loader.gif', 'file-icon.ico', 'icon.ico', 'icon.png', 'logo.png', '_bbm_template.db', 'sandby.glade'])]
 )
