@@ -53,7 +53,7 @@ stats_window_created = False
 class sandbyInitialize:
 
     def __init__(self):
-        self.version = "Release 0.1.1")
+        self.version = "Release 0.1.1"
 
         #Set up the program directories
         checklist_files = ["_bbm_template.db"]
