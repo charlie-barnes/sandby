@@ -53,8 +53,7 @@ stats_window_created = False
 class sandbyInitialize:
 
     def __init__(self):
-        #The version of Sandby Recorder based on last modified time of sys.argv[0]
-        self.version = "Release 0." + time.strftime("%Y%m%d", time.gmtime(os.path.getmtime(sys.argv[0])))
+        self.version = "Release 0.1.1")
 
         #Set up the program directories
         checklist_files = ["_bbm_template.db"]
