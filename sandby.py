@@ -38,7 +38,7 @@ except:
         
 DATE_SEPARATOR = "/"
 
-CHECKLISTS = []
+checklists_data = []
 
 class PrintData:
     text = None
@@ -57,7 +57,7 @@ class sandbyInitialize:
         self.version = "Release 0." + time.strftime("%Y%m%d", time.gmtime(os.path.getmtime(sys.argv[0])))
 
         #Set up the program directories
-        checklists = ["_bbm_template.db"]
+        checklist_files = ["_bbm_template.db"]
 
         #Load the Glade widget tree
         self.glade = gtk.Builder()
@@ -124,14 +124,14 @@ class sandbyInitialize:
         throbber.set_from_animation(animation)
         self.glade.get_object("eventbox2").modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffffff"))
 
-        #Loop through our checklists 
-        for file in checklists:
+        #Loop through our checklist_files 
+        for file in checklist_files:
                 try:
                     connection = sqlite.connect(file)
                     cursor = connection.cursor()
                     cursor.execute("Select checklist FROM meta")
                     checklist = cursor.fetchone()
-                    CHECKLISTS.append([checklist[0], file])
+                    checklists_data.append([checklist[0], file])
                 except:
                     logging.debug(file + " doesn't appear to be a valid database file")
 
@@ -1803,7 +1803,7 @@ class sandbyActions(sandbyInitialize):
             else:
                 filenameprint = filename.replace (os.getenv("HOME"), '~', 1)
    
-            shutil.copy2(CHECKLISTS[checklist][1], filename)
+            shutil.copy2(checklists_data[checklist][1], filename)
 
             self.set_widgets_sensitive(True)
             self.con = sqlite.connect(self.database_filename)
@@ -1870,7 +1870,7 @@ class sandbyActions(sandbyInitialize):
 
        combobox = gtk.combo_box_new_text()
 
-       for clist in CHECKLISTS:
+       for clist in checklists_data:
            combobox.append_text(clist[0])
 
        combobox.set_active(0)
