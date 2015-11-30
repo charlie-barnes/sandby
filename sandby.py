@@ -9,10 +9,7 @@
 #Copyright (C) 2009 Charlie Barnes. All rights reserved.
 
 import os
-import pygtk
-pygtk.require("2.0")
 import gtk
-import gtk.glade
 from sqlite3 import dbapi2 as sqlite
 import gobject
 import time
@@ -63,7 +60,8 @@ class sandbyInitialize:
         checklists = ["_bbm_template.db"]
 
         #Load the Glade widget tree
-        self.glade=gtk.glade.XML("sandby.glade")
+        self.glade = gtk.Builder()
+        self.glade.add_from_file('sandby.glade')
 
         #The loaded database
         self.database_filename = None
@@ -73,7 +71,7 @@ class sandbyInitialize:
         self.cur = None
 
         #Setup the main window
-        self.main_window = self.glade.get_widget("main_window")
+        self.main_window = self.glade.get_object("main_window")
         self.main_window.connect("destroy", gtk.main_quit)
         self.main_window.connect("window-state-event", self.on_window_state_change)
         self.window_in_fullscreen = False
@@ -83,7 +81,7 @@ class sandbyInitialize:
 
         #The database treeview
         self.database_table_rows = gtk.ListStore(str, str, str, str, str, int)
-        self.database_table = self.glade.get_widget("treeview2")
+        self.database_table = self.glade.get_object("treeview2")
         self.database_table.set_headers_visible(False)
         self.database_table.set_reorderable(True)
         self.database_table_rows.set_sort_column_id(0, gtk.SORT_ASCENDING)
@@ -111,7 +109,7 @@ class sandbyInitialize:
                        
         self.database_table.set_model(self.database_table_rows)
  
-        self.glade.get_widget("toolbutton4").set_expand(True)
+        self.glade.get_object("toolbutton4").set_expand(True)
 
         completion = gtk.EntryCompletion()
         completion.connect("match-selected", self.on_completion_match)
@@ -119,12 +117,12 @@ class sandbyInitialize:
         completion.set_minimum_key_length(3)
         completion.set_match_func(self.completion_match, 0)     
         completion.set_model(gtk.ListStore(str))
-        self.glade.get_widget("entry6").set_completion(completion)
+        self.glade.get_object("entry6").set_completion(completion)
         
-        throbber = self.glade.get_widget("image2")
+        throbber = self.glade.get_object("image2")
         animation = gtk.gdk.PixbufAnimation("loader.gif")
         throbber.set_from_animation(animation)
-        self.glade.get_widget("eventbox2").modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffffff"))
+        self.glade.get_object("eventbox2").modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffffff"))
 
         #Loop through our checklists 
         for file in checklists:
@@ -198,7 +196,7 @@ class sandbyActions(sandbyInitialize):
                "del_key":self.del_key,
                "main_quit":self.main_quit
               }
-        self.glade.signal_autoconnect(mdict)
+        self.glade.connect_signals(mdict)
 
     def focus_in_species(self, widget, var):
         if widget.get_text() == "Species":
@@ -261,7 +259,7 @@ class sandbyActions(sandbyInitialize):
 
     def statistics_copy (self, widget):
       clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
-      treeselection = self.glade.get_widget("treeview1").get_selection()
+      treeselection = self.glade.get_object("treeview1").get_selection()
       (model, paths) = treeselection.get_selected_rows()
 
       record_list = []
@@ -274,11 +272,11 @@ class sandbyActions(sandbyInitialize):
       clipboard.set_text('\n'.join(record_list))
 
     def statistics_select_all (self, widget):
-      treeselection = self.glade.get_widget("treeview1").get_selection()
+      treeselection = self.glade.get_object("treeview1").get_selection()
       treeselection.select_all()
 
     def statistics_select_none (self, widget):
-      treeselection = self.glade.get_widget("treeview1").get_selection()
+      treeselection = self.glade.get_object("treeview1").get_selection()
       treeselection.unselect_all()
 
     def statistics_window_popup_menu(self, treeview, event):
@@ -294,21 +292,21 @@ class sandbyActions(sandbyInitialize):
               treeselection = treeview.get_selection()
 
               if treeselection.count_selected_rows() > 0:
-                  self.glade.get_widget("menuitem13").set_sensitive(True)
+                  self.glade.get_object("menuitem13").set_sensitive(True)
               else:
-                  self.glade.get_widget("menuitem13").set_sensitive(False)
+                  self.glade.get_object("menuitem13").set_sensitive(False)
 
-              self.glade.get_widget("statistics_window_popup_menu").popup( None, None, None, event.button, time)
+              self.glade.get_object("statistics_window_popup_menu").popup( None, None, None, event.button, time)
           return True                    
 
     def del_key (self, widget, event):
     
         if re.match ("(Delete)", gtk.gdk.keyval_name (event.keyval)):
             
-            treeselection = self.glade.get_widget("treeview2").get_selection()
+            treeselection = self.glade.get_object("treeview2").get_selection()
             (model, paths) = treeselection.get_selected_rows()
 
-            year, month, day = self.glade.get_widget("calendar2").get_date()
+            year, month, day = self.glade.get_object("calendar2").get_date()
 
             for path in paths:
                 id = str(model.get_value(model.get_iter(path), 0))
@@ -320,10 +318,10 @@ class sandbyActions(sandbyInitialize):
             self.day_change(None)                    
 
     def main_window_delete (self, widget):        
-        treeselection = self.glade.get_widget("treeview2").get_selection()
+        treeselection = self.glade.get_object("treeview2").get_selection()
         (model, paths) = treeselection.get_selected_rows()
 
-        year, month, day = self.glade.get_widget("calendar2").get_date()
+        year, month, day = self.glade.get_object("calendar2").get_date()
 
         for path in paths:
             id = str(model.get_value(model.get_iter(path), 0))
@@ -335,7 +333,7 @@ class sandbyActions(sandbyInitialize):
         self.day_change(None)
 
     def main_window_edit (self, widget):
-        treeselection = self.glade.get_widget("treeview2").get_selection()
+        treeselection = self.glade.get_object("treeview2").get_selection()
         (model, paths) = treeselection.get_selected_rows()
       
         vernacular = model.get_value(model.get_iter(paths[0]), 1)
@@ -350,14 +348,14 @@ class sandbyActions(sandbyInitialize):
         else:
             species = scientific
         
-        self.glade.get_widget("entry6").set_text(species)
-        self.glade.get_widget("entry4").set_text(str(count))
+        self.glade.get_object("entry6").set_text(species)
+        self.glade.get_object("entry4").set_text(str(count))
                                
-        self.glade.get_widget("label14").set_text("Edit")
+        self.glade.get_object("label14").set_text("Edit")
 
     def main_window_copy (self, widget):
       clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
-      treeselection = self.glade.get_widget("treeview2").get_selection()
+      treeselection = self.glade.get_object("treeview2").get_selection()
       (model, paths) = treeselection.get_selected_rows()
 
       record_list = []
@@ -370,11 +368,11 @@ class sandbyActions(sandbyInitialize):
       clipboard.set_text('\n'.join(record_list))
 
     def main_window_select_all (self, widget):
-      treeselection = self.glade.get_widget("treeview2").get_selection()
+      treeselection = self.glade.get_object("treeview2").get_selection()
       treeselection.select_all()
 
     def main_window_select_none (self, widget):
-      treeselection = self.glade.get_widget("treeview2").get_selection()
+      treeselection = self.glade.get_object("treeview2").get_selection()
       treeselection.unselect_all()
                                        
     def main_window_popup_menu(self, treeview, event):
@@ -390,15 +388,15 @@ class sandbyActions(sandbyInitialize):
               treeselection = treeview.get_selection()
 
               if treeselection.count_selected_rows() > 0:
-                  self.glade.get_widget("menuitem24").set_sensitive(True)
-                  self.glade.get_widget("menuitem28").set_sensitive(True)
-                  self.glade.get_widget("menuitem30").set_sensitive(True)
+                  self.glade.get_object("menuitem24").set_sensitive(True)
+                  self.glade.get_object("menuitem28").set_sensitive(True)
+                  self.glade.get_object("menuitem30").set_sensitive(True)
               else:
-                  self.glade.get_widget("menuitem24").set_sensitive(False)
-                  self.glade.get_widget("menuitem28").set_sensitive(False)
-                  self.glade.get_widget("menuitem30").set_sensitive(False)
+                  self.glade.get_object("menuitem24").set_sensitive(False)
+                  self.glade.get_object("menuitem28").set_sensitive(False)
+                  self.glade.get_object("menuitem30").set_sensitive(False)
 
-              self.glade.get_widget("main_window_popup_menu").popup( None, None, None, event.button, time)
+              self.glade.get_object("main_window_popup_menu").popup( None, None, None, event.button, time)
           return True
 
     def sort_ranks(self, model, iter1, iter2, column):
@@ -516,11 +514,11 @@ class sandbyActions(sandbyInitialize):
                    return 1
  
     def stats_close(self, widget):
-       self.glade.get_widget("statistics_window").hide()
+       self.glade.get_object("statistics_window").hide()
        return True
 
     def stats_delete(self, widget, userdata):
-        self.glade.get_widget("statistics_window").hide() 
+        self.glade.get_object("statistics_window").hide() 
         return True
 
     def plot_graph(self, widget):
@@ -532,7 +530,7 @@ class sandbyActions(sandbyInitialize):
             topborder = 20
             bottomborder = 40
 
-            canvas = self.glade.get_widget("eventbox1").get_children()[0]
+            canvas = self.glade.get_object("eventbox1").get_children()[0]
 
             root = goocanvas.GroupModel()
             canvas.set_root_item_model(root)
@@ -540,12 +538,12 @@ class sandbyActions(sandbyInitialize):
 
             leftbounds, topbounds, rightbounds, bottombounds = canvas.get_bounds()
 
-            treeselection = self.glade.get_widget("scrolledwindow1").get_children()[0].get_selection()
+            treeselection = self.glade.get_object("scrolledwindow1").get_children()[0].get_selection()
             (model, iter) = treeselection.get_selected()
 
             if model.get_value(iter, 1) == 0:
 
-                treeselection = self.glade.get_widget("treeview1").get_selection()
+                treeselection = self.glade.get_object("treeview1").get_selection()
                 (model, paths) = treeselection.get_selected_rows()
 
                 columns = range(model.get_n_columns()-3)
@@ -595,9 +593,9 @@ class sandbyActions(sandbyInitialize):
         while gtk.events_pending():
             gtk.main_iteration()
 
-        self.glade.get_widget("statistics_window").window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
-        self.glade.get_widget("vbox777").hide()
-        self.glade.get_widget("scrolledwindow3").show()
+        self.glade.get_object("statistics_window").window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
+        self.glade.get_object("vbox777").hide()
+        self.glade.get_object("scrolledwindow3").show()
         
         while gtk.events_pending():
             gtk.main_iteration()
@@ -618,7 +616,7 @@ class sandbyActions(sandbyInitialize):
             numyears = len(years)
 
             # The treeview to populate with data
-            treeview = self.glade.get_widget("treeview1")
+            treeview = self.glade.get_object("treeview1")
 
             # Blank the treeview
             for column in treeview.get_columns():
@@ -636,7 +634,7 @@ class sandbyActions(sandbyInitialize):
             # Switch on the selected stats
             if model.get_value(iter, 1) == 0:
                 # Set the title of the stats
-                self.glade.get_widget("label37").set_markup("<span weight='bold' size='11000' color='white'>Specimen Counts</span>")
+                self.glade.get_object("label37").set_markup("<span weight='bold' size='11000' color='white'>Specimen Counts</span>")
 
                 # Create the liststore
                 liststore = gtk.ListStore(str, str, str, *[str]*(len(years)))
@@ -728,7 +726,7 @@ class sandbyActions(sandbyInitialize):
 
             elif model.get_value(iter, 1) == 1:
                 # Set the title of the stats
-                self.glade.get_widget("label37").set_markup("<span weight='bold' size='11000' color='white'>Species Ranks</span>")
+                self.glade.get_object("label37").set_markup("<span weight='bold' size='11000' color='white'>Species Ranks</span>")
 
                 # Create the liststore
                 liststore = gtk.ListStore(str, str, str, *[int]*(len(years)))
@@ -810,7 +808,7 @@ class sandbyActions(sandbyInitialize):
 
             elif model.get_value(iter, 1) == 2:
                 # Set the title of the stats
-                self.glade.get_widget("label37").set_markup("<span weight='bold' size='11000' color='white'>Earliest Dates</span>")
+                self.glade.get_object("label37").set_markup("<span weight='bold' size='11000' color='white'>Earliest Dates</span>")
 
                 # Create the liststore
                 liststore = gtk.ListStore(str, str, str, *[str]*(len(years)))
@@ -894,7 +892,7 @@ class sandbyActions(sandbyInitialize):
 
             elif model.get_value(iter, 1) == 3:
                 # Set the title of the stats
-                self.glade.get_widget("label37").set_markup("<span weight='bold' size='11000' color='white'>Last Dates</span>")
+                self.glade.get_object("label37").set_markup("<span weight='bold' size='11000' color='white'>Last Dates</span>")
 
                 # Create the liststore
                 liststore = gtk.ListStore(str, str, str, *[str]*(len(years)))
@@ -978,7 +976,7 @@ class sandbyActions(sandbyInitialize):
 
             elif model.get_value(iter, 1) == 4:
                 # Set the title of the stats
-                self.glade.get_widget("label37").set_markup("<span weight='bold' size='11000' color='white'>Cumulative Monthly Specimen Counts</span>")
+                self.glade.get_object("label37").set_markup("<span weight='bold' size='11000' color='white'>Cumulative Monthly Specimen Counts</span>")
 
                 month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
@@ -1107,7 +1105,7 @@ class sandbyActions(sandbyInitialize):
 
             elif model.get_value(iter, 1) == 5:
                 # Set the title of the stats
-                self.glade.get_widget("label37").set_markup("<span weight='bold' size='11000' color='white'>Average Monthly Specimen Counts</span>")
+                self.glade.get_object("label37").set_markup("<span weight='bold' size='11000' color='white'>Average Monthly Specimen Counts</span>")
 
                 month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
@@ -1253,7 +1251,7 @@ class sandbyActions(sandbyInitialize):
                 
             elif model.get_value(iter, 1) == 8:
                 # Set the title of the stats
-                self.glade.get_widget("label37").set_markup("<span weight='bold' size='11000' color='white'>" + str(model.get_value(iter, 2)) + " Monthly Specimen Counts</span>")
+                self.glade.get_object("label37").set_markup("<span weight='bold' size='11000' color='white'>" + str(model.get_value(iter, 2)) + " Monthly Specimen Counts</span>")
 
                 month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
@@ -1386,7 +1384,7 @@ class sandbyActions(sandbyInitialize):
                 
             elif model.get_value(iter, 1) == 9:
                 # Set the title of the stats
-                self.glade.get_widget("label37").set_markup("<span weight='bold' size='11000' color='white'>Species Counts</span>")
+                self.glade.get_object("label37").set_markup("<span weight='bold' size='11000' color='white'>Species Counts</span>")
 
                 # Create the liststore
                 liststore = gtk.ListStore(str, str, str, *[int]*(len(years)))
@@ -1472,19 +1470,19 @@ class sandbyActions(sandbyInitialize):
         while gtk.events_pending():
             gtk.main_iteration()
                 
-        self.glade.get_widget("statistics_window").window.set_cursor(None)
-        self.glade.get_widget("vbox777").show()
-        self.glade.get_widget("scrolledwindow3").hide()
+        self.glade.get_object("statistics_window").window.set_cursor(None)
+        self.glade.get_object("vbox777").show()
+        self.glade.get_object("scrolledwindow3").hide()
 
 
     def show_statistics(self, widget):
 
         global stats_window_created
 
-        self.glade.get_widget("statistics_window").show()
+        self.glade.get_object("statistics_window").show()
 
         if not stats_window_created:
-            self.glade.get_widget("eventbox6").modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#5f8fc2"))
+            self.glade.get_object("eventbox6").modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#5f8fc2"))
 
             store = gtk.TreeStore(str, int, int)
             treeview = gtk.TreeView(store)
@@ -1554,8 +1552,8 @@ class sandbyActions(sandbyInitialize):
 
             treeview.append_column(col)
 
-            self.glade.get_widget("scrolledwindow1").add(treeview)
-            self.glade.get_widget("scrolledwindow1").show_all()
+            self.glade.get_object("scrolledwindow1").add(treeview)
+            self.glade.get_object("scrolledwindow1").show_all()
 
             treeview.connect("cursor_changed", self.select_stats_mode)
 
@@ -1579,8 +1577,8 @@ class sandbyActions(sandbyInitialize):
                 root = goocanvas.GroupModel()
                 canvas.set_root_item_model(root)
             
-                self.glade.get_widget("eventbox1").add(canvas)
-                self.glade.get_widget("expander1").show()
+                self.glade.get_object("eventbox1").add(canvas)
+                self.glade.get_object("expander1").show()
 
             while gtk.events_pending():
                 gtk.main_iteration()
@@ -1656,7 +1654,7 @@ class sandbyActions(sandbyInitialize):
         global settings, page_setup
         if settings is None:
             settings = gtk.PrintSettings()
-        page_setup = gtk.print_run_page_setup_dialog(self.glade.get_widget("main_window"),
+        page_setup = gtk.print_run_page_setup_dialog(self.glade.get_object("main_window"),
                                                         page_setup, settings)
 
     def do_print(self, action):
@@ -1697,9 +1695,9 @@ class sandbyActions(sandbyInitialize):
         print_.connect("draw_page", self.draw_page, print_data)
 
         try:
-            res = print_.run(gtk.PRINT_OPERATION_ACTION_PRINT_DIALOG, self.glade.get_widget("main_window"))
+            res = print_.run(gtk.PRINT_OPERATION_ACTION_PRINT_DIALOG, self.glade.get_object("main_window"))
         except gobject.GError, ex:
-            error_dialog = gtk.MessageDialog(self.glade.get_widget("main_window"),
+            error_dialog = gtk.MessageDialog(self.glade.get_object("main_window"),
                                              gtk.DIALOG_DESTROY_WITH_PARENT,
                                              gtk._MESSAGE_ERROR,
                                              gtk.BUTTONS_CLOSE,
@@ -1714,13 +1712,13 @@ class sandbyActions(sandbyInitialize):
             active_prints.remove(print_)
 
     def window_resize(self, widget, userdata):
-       if self.glade.get_widget("togglebutton1").get_active():
+       if self.glade.get_object("togglebutton1").get_active():
          """Called when the due button is clicked."""
-         rect = self.glade.get_widget("togglebutton1").get_allocation()
-         x, y = self.glade.get_widget("togglebutton1").window.get_origin()
+         rect = self.glade.get_object("togglebutton1").get_allocation()
+         x, y = self.glade.get_object("togglebutton1").window.get_origin()
 
-         self.glade.get_widget("calendar_window").show()
-         self.glade.get_widget("calendar_window").move((x + rect.x), (y + rect.y + rect.height))
+         self.glade.get_object("calendar_window").show()
+         self.glade.get_object("calendar_window").move((x + rect.x), (y + rect.y + rect.height))
 
     def toggle_calendar(self, widget):
        """Called when the due button is clicked."""
@@ -1728,31 +1726,31 @@ class sandbyActions(sandbyInitialize):
            rect = widget.get_allocation()
            x, y = widget.window.get_origin()
 
-           self.glade.get_widget("calendar_window").show() 
-           self.glade.get_widget("calendar_window").move((x + rect.x), (y + rect.y + rect.height))
+           self.glade.get_object("calendar_window").show() 
+           self.glade.get_object("calendar_window").move((x + rect.x), (y + rect.y + rect.height))
        else:
-           self.glade.get_widget("calendar_window").hide()
+           self.glade.get_object("calendar_window").hide()
 
     def main_quit(self, widget):
         gtk.main_quit()
 
     def dataset_properties(self, widget):
-        self.glade.get_widget("dataset_properties").show()
-        self.glade.get_widget("notebook1").set_current_page(0)
+        self.glade.get_object("dataset_properties").show()
+        self.glade.get_object("notebook1").set_current_page(0)
 
     def dataset_properties_close(self, widget):
-        name = self.glade.get_widget("entry1").get_text()
-        description = self.glade.get_widget("entry2").get_text()
-        author = self.glade.get_widget("entry3").get_text()
+        name = self.glade.get_object("entry1").get_text()
+        description = self.glade.get_object("entry2").get_text()
+        author = self.glade.get_object("entry3").get_text()
 
         self.cur.execute("UPDATE meta SET name = '" + name + "', description = '" + description + "', author = '" + author + "'")
         self.con.commit()
-        self.glade.get_widget("dataset_properties").hide()
+        self.glade.get_object("dataset_properties").hide()
         self.load_metadata()
         return True
 
     def dataset_properties_hide(self, widget, userdata):
-        self.glade.get_widget("dataset_properties").hide()
+        self.glade.get_object("dataset_properties").hide()
         return True
 
     def show_msg(self, primary_text, seconday_text, icon="error", buttons="close"):
@@ -1783,16 +1781,16 @@ class sandbyActions(sandbyInitialize):
 
     def set_widgets_sensitive(self,state):
         """change sensitive object after opening/closing database"""
-        #self.glade.get_widget("menuitem5").set_sensitive(state)
-        #self.glade.get_widget("button6").set_sensitive(state)
-        #self.glade.get_widget("button7").set_sensitive(state)
-        #self.glade.get_widget("button11").set_sensitive(state)
-        #self.glade.get_widget("button12").set_sensitive(state)
-        #self.glade.get_widget("imagemenuitem4").set_sensitive(state)
-        #self.glade.get_widget("tool_add_row").set_sensitive(state)
-        #self.glade.get_widget("imagemenuitem6").set_sensitive(state)
-        #self.glade.get_widget("menuitem6").set_sensitive(state)
-        #self.glade.get_widget("menuitem7").set_sensitive(state)
+        #self.glade.get_object("menuitem5").set_sensitive(state)
+        #self.glade.get_object("button6").set_sensitive(state)
+        #self.glade.get_object("button7").set_sensitive(state)
+        #self.glade.get_object("button11").set_sensitive(state)
+        #self.glade.get_object("button12").set_sensitive(state)
+        #self.glade.get_object("imagemenuitem4").set_sensitive(state)
+        #self.glade.get_object("tool_add_row").set_sensitive(state)
+        #self.glade.get_object("imagemenuitem6").set_sensitive(state)
+        #self.glade.get_object("menuitem6").set_sensitive(state)
+        #self.glade.get_object("menuitem7").set_sensitive(state)
 
     def create_database(self, filename, checklist):
         """create database file"""
@@ -1836,7 +1834,7 @@ class sandbyActions(sandbyInitialize):
                                         gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         dialog.set_default_response(gtk.RESPONSE_OK)
 
-        dialog.set_transient_for(self.glade.get_widget("main_window"))
+        dialog.set_transient_for(self.glade.get_object("main_window"))
         dialog.set_property('skip-taskbar-hint', True)
 
         response = dialog.run()
@@ -1865,7 +1863,7 @@ class sandbyActions(sandbyInitialize):
 
        dialog.set_default_response(gtk.RESPONSE_OK)
        dialog.set_position(gtk.WIN_POS_CENTER_ON_PARENT)
-       dialog.set_transient_for(self.glade.get_widget("main_window"))
+       dialog.set_transient_for(self.glade.get_object("main_window"))
        dialog.set_property('skip-taskbar-hint', True)
 
        hbox = gtk.HBox(False, 10)
@@ -1909,18 +1907,18 @@ class sandbyActions(sandbyInitialize):
             self.main_window.set_title('Sandby Moth Recorder')
             self.set_widgets_sensitive(False) # >>> v
 
-            #self.glade.get_widget("hbox1").set_sensitive(False)
-            self.glade.get_widget("imagemenuitem4").set_sensitive(False)
-            self.glade.get_widget("menuitem6").set_sensitive(False)
-            self.glade.get_widget("menuitem8").set_sensitive(False)
-            self.glade.get_widget("menuitem2").set_sensitive(False)
-            self.glade.get_widget("menuitem15").set_sensitive(False)
-            self.glade.get_widget("menuitem7").set_sensitive(False)
-            self.glade.get_widget("menuitem3").set_sensitive(False)
-            self.glade.get_widget("menuitem5").set_sensitive(False)
-            self.glade.get_widget("toolbutton2").set_sensitive(False)
-            self.glade.get_widget("togglebutton1").hide()
-            self.glade.get_widget("hbox3").hide()
+            #self.glade.get_object("hbox1").set_sensitive(False)
+            self.glade.get_object("imagemenuitem4").set_sensitive(False)
+            self.glade.get_object("menuitem6").set_sensitive(False)
+            self.glade.get_object("menuitem8").set_sensitive(False)
+            self.glade.get_object("menuitem2").set_sensitive(False)
+            self.glade.get_object("menuitem15").set_sensitive(False)
+            self.glade.get_object("menuitem7").set_sensitive(False)
+            self.glade.get_object("menuitem3").set_sensitive(False)
+            self.glade.get_object("menuitem5").set_sensitive(False)
+            self.glade.get_object("toolbutton2").set_sensitive(False)
+            self.glade.get_object("togglebutton1").hide()
+            self.glade.get_object("hbox3").hide()
             self.database_table.set_headers_visible(False)
 
             self.database_table_rows.clear()
@@ -1939,7 +1937,7 @@ class sandbyActions(sandbyInitialize):
        dialog.set_default_response(gtk.RESPONSE_OK)
        response = dialog.run()
 
-       dialog.set_transient_for(self.glade.get_widget("main_window"))
+       dialog.set_transient_for(self.glade.get_object("main_window"))
        dialog.set_property('skip-taskbar-hint', True)
 
        if response == gtk.RESPONSE_OK:
@@ -1971,37 +1969,37 @@ class sandbyActions(sandbyInitialize):
 
             today = date.today()
 
-            self.glade.get_widget("calendar2").select_month(today.month-1, today.year)
-            self.glade.get_widget("calendar2").select_day(today.day)
+            self.glade.get_object("calendar2").select_month(today.month-1, today.year)
+            self.glade.get_object("calendar2").select_day(today.day)
 
             self.year_change(False)
             self.month_change(False)
             self.day_change(False)
 
-            #self.glade.get_widget("hbox1").set_sensitive(True)
-            self.glade.get_widget("imagemenuitem4").set_sensitive(True)
-            self.glade.get_widget("menuitem6").set_sensitive(True)
-            self.glade.get_widget("menuitem8").set_sensitive(True)
-            self.glade.get_widget("menuitem2").set_sensitive(True)
-            self.glade.get_widget("menuitem15").set_sensitive(True)
-            self.glade.get_widget("menuitem7").set_sensitive(True)
-            self.glade.get_widget("menuitem3").set_sensitive(True)
-            self.glade.get_widget("menuitem5").set_sensitive(True)
-            self.glade.get_widget("toolbutton2").set_sensitive(True)
+            #self.glade.get_object("hbox1").set_sensitive(True)
+            self.glade.get_object("imagemenuitem4").set_sensitive(True)
+            self.glade.get_object("menuitem6").set_sensitive(True)
+            self.glade.get_object("menuitem8").set_sensitive(True)
+            self.glade.get_object("menuitem2").set_sensitive(True)
+            self.glade.get_object("menuitem15").set_sensitive(True)
+            self.glade.get_object("menuitem7").set_sensitive(True)
+            self.glade.get_object("menuitem3").set_sensitive(True)
+            self.glade.get_object("menuitem5").set_sensitive(True)
+            self.glade.get_object("toolbutton2").set_sensitive(True)
 
             self.database_table.set_headers_visible(True)
 
 
-            self.glade.get_widget("calendar_window").realize()
-            rect = self.glade.get_widget("calendar_window").get_allocation()
+            self.glade.get_object("calendar_window").realize()
+            rect = self.glade.get_object("calendar_window").get_allocation()
 
 
-            self.glade.get_widget("togglebutton1").set_size_request(rect.width-1, -1)
+            self.glade.get_object("togglebutton1").set_size_request(rect.width-1, -1)
 
-            self.glade.get_widget("togglebutton1").show()
-            self.glade.get_widget("hbox3").show()
+            self.glade.get_object("togglebutton1").show()
+            self.glade.get_object("hbox3").show()
 
-            treeview = self.glade.get_widget("scrolledwindow6").get_child()
+            treeview = self.glade.get_object("scrolledwindow6").get_child()
             treeview.set_headers_visible(True)
         except sqlite.DatabaseError:
             self.show_msg("Could not open the file " + self.database_filename + ".", "The file does not appear to be a valid dataset.", "error", "close")
@@ -2011,9 +2009,9 @@ class sandbyActions(sandbyInitialize):
             return
 
     def add_data(self,widget):
-        year, month, day = self.glade.get_widget("calendar2").get_date()
-        count = int(self.glade.get_widget("entry4").get_text())
-        entry = self.glade.get_widget("entry6").get_text()
+        year, month, day = self.glade.get_object("calendar2").get_date()
+        count = int(self.glade.get_object("entry4").get_text())
+        entry = self.glade.get_object("entry6").get_text()
 
         if count != 0:
 
@@ -2028,14 +2026,14 @@ class sandbyActions(sandbyInitialize):
               self.cur.execute("INSERT INTO records (date, count, species) VALUES('" + str(year) + "-" + str(month+1).rjust(2, "0") + "-" + str(day).rjust(2, "0") + "', '" + str(count) + "', '" + species + "')")
               self.con.commit()
 
-              self.glade.get_widget("entry6").set_text("Species")
-              self.glade.get_widget("entry4").set_text("Count")
+              self.glade.get_object("entry6").set_text("Species")
+              self.glade.get_object("entry4").set_text("Count")
 
               self.year_change(None)
               self.month_change(None)
               self.day_change(None, True)
           else:
-              dialog = gtk.MessageDialog(self.glade.get_widget("main_window"), 
+              dialog = gtk.MessageDialog(self.glade.get_object("main_window"), 
                                          gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
                                          gtk.BUTTONS_OK)
               dialog.set_position(gtk.WIN_POS_CENTER_ON_PARENT)
@@ -2045,15 +2043,15 @@ class sandbyActions(sandbyInitialize):
               dialog.destroy()
 
     def do_data(self, widget):
-        if self.glade.get_widget("label14").get_text() == "Add":
+        if self.glade.get_object("label14").get_text() == "Add":
             self.add_data(widget)
-        if self.glade.get_widget("label14").get_text() == "Edit":
+        if self.glade.get_object("label14").get_text() == "Edit":
             self.edit_data(widget)
 
     def edit_data(self, widget):
-        year, month, day = self.glade.get_widget("calendar2").get_date()
-        count = int(self.glade.get_widget("entry4").get_text())
-        entry = self.glade.get_widget("entry6").get_text()
+        year, month, day = self.glade.get_object("calendar2").get_date()
+        count = int(self.glade.get_object("entry4").get_text())
+        entry = self.glade.get_object("entry6").get_text()
         
         if count != 0:
 
@@ -2065,7 +2063,7 @@ class sandbyActions(sandbyInitialize):
               species = record[0]                      
         
           if species:
-              treeselection = self.glade.get_widget("treeview2").get_selection()
+              treeselection = self.glade.get_object("treeview2").get_selection()
               (model, paths) = treeselection.get_selected_rows()
       
               self.cur.execute("SELECT code FROM taxa WHERE code LIKE ?", [model.get_value(model.get_iter(paths[0]), 0)])
@@ -2076,16 +2074,16 @@ class sandbyActions(sandbyInitialize):
               self.cur.execute("UPDATE records SET species='" + species + "', count='" + str(count) + "' WHERE species='" + oldspecies + "' AND date='" + str(year) + "-" + str(month+1).rjust(2, "0") + "-" + str(day).rjust(2, "0") + "'")
               self.con.commit()
 
-              self.glade.get_widget("entry6").set_text("Species")
-              self.glade.get_widget("entry4").set_text("Count")                          
+              self.glade.get_object("entry6").set_text("Species")
+              self.glade.get_object("entry4").set_text("Count")                          
       
-              self.glade.get_widget("label14").set_text("Add")
+              self.glade.get_object("label14").set_text("Add")
         
               self.year_change(None)
               self.month_change(None)
               self.day_change(None)
           else:
-              dialog = gtk.MessageDialog(self.glade.get_widget("main_window"), 
+              dialog = gtk.MessageDialog(self.glade.get_object("main_window"), 
                                          gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, 
                                          gtk.BUTTONS_OK)
               dialog.set_position(gtk.WIN_POS_CENTER_ON_PARENT)
@@ -2098,14 +2096,14 @@ class sandbyActions(sandbyInitialize):
         # attempt to records from the database; handle any exceptions
         try:
 
-            self.glade.get_widget("calendar2").clear_marks()
+            self.glade.get_object("calendar2").clear_marks()
 
-            year, month, day = self.glade.get_widget("calendar2").get_date()
+            year, month, day = self.glade.get_object("calendar2").get_date()
             date = str(year)
 
             day_ord = str(day) + {1: 'st', 2: 'nd', 3: 'rd'}.get(day % (10 < day % 100 < 14 or 10), 'th')
 
-            self.glade.get_widget("label3").set_markup(day_ord + " " + calendar.month_name[month+1] + " " + str(year))
+            self.glade.get_object("label3").set_markup(day_ord + " " + calendar.month_name[month+1] + " " + str(year))
 
         # sqlite error handler
         except sqlite.OperationalError, errormsg:
@@ -2113,7 +2111,7 @@ class sandbyActions(sandbyInitialize):
 
     def month_change(self,widget):
 
-        year, month, day = self.glade.get_widget("calendar2").get_date()
+        year, month, day = self.glade.get_object("calendar2").get_date()
 
         if month == 0:
             self.year_change(None)
@@ -2124,20 +2122,20 @@ class sandbyActions(sandbyInitialize):
         # attempt to records from the database; handle any exceptions
         try:
 
-            self.glade.get_widget("calendar2").clear_marks()
+            self.glade.get_object("calendar2").clear_marks()
 
-            year, month, day = self.glade.get_widget("calendar2").get_date()
+            year, month, day = self.glade.get_object("calendar2").get_date()
             date = str(year) + "-" + str(month+1).rjust(2, "0")
 
             day_ord = str(day) + {1: 'st', 2: 'nd', 3: 'rd'}.get(day % (10 < day % 100 < 14 or 10), 'th')
 
-            self.glade.get_widget("label3").set_markup(day_ord + " " + calendar.month_name[month+1] + " " + str(year))
+            self.glade.get_object("label3").set_markup(day_ord + " " + calendar.month_name[month+1] + " " + str(year))
 
             self.cur.execute("SELECT * FROM records WHERE date LIKE '%" + date + "%'")
 
             for rcd in self.cur:
                 day = int(rcd[0][8:])
-                self.glade.get_widget("calendar2").mark_day(day)
+                self.glade.get_object("calendar2").mark_day(day)
 
         # sqlite error handler
         except sqlite.OperationalError, errormsg:
@@ -2146,7 +2144,7 @@ class sandbyActions(sandbyInitialize):
     """  """
     def day_change_double_click(self,widget):
       self.day_change(widget);
-      self.glade.get_widget("togglebutton1").set_active(False);
+      self.glade.get_object("togglebutton1").set_active(False);
         
     """ Load the records from the database """
     def day_change(self, widget, highlight=False):
@@ -2154,12 +2152,12 @@ class sandbyActions(sandbyInitialize):
         # attempt to load records from the database
         try:
 
-            year, month, day = self.glade.get_widget("calendar2").get_date()
+            year, month, day = self.glade.get_object("calendar2").get_date()
             date = str(year) + "-" + str(month+1).rjust(2, "0") + "-" + str(day).rjust(2, "0")
 
             day_ord = str(day) + {1: 'st', 2: 'nd', 3: 'rd'}.get(day % (10 < day % 100 < 14 or 10), 'th')
 
-            self.glade.get_widget("label3").set_markup(day_ord + " " + calendar.month_name[month+1] + " " + str(year))
+            self.glade.get_object("label3").set_markup(day_ord + " " + calendar.month_name[month+1] + " " + str(year))
 
             self.database_table_rows.clear()
 
@@ -2174,11 +2172,11 @@ class sandbyActions(sandbyInitialize):
                     iter=self.database_table_rows.append([rcd[0], rcd[3], "<i>" + rcd[2] + "</i>", rcd[4], rcd[5], int(rcd[1])])
             
             if highlight:     
-                treeselection = self.glade.get_widget("treeview2").get_selection()
+                treeselection = self.glade.get_object("treeview2").get_selection()
                 treeselection.select_iter(iter)
 
             if count > 0:
-                self.glade.get_widget("label3").set_markup("<b>" + day_ord + " " + calendar.month_name[month+1] + " " + str(year) + "</b>")
+                self.glade.get_object("label3").set_markup("<b>" + day_ord + " " + calendar.month_name[month+1] + " " + str(year) + "</b>")
 
             self.set_widgets_sensitive(True)
 
@@ -2196,7 +2194,7 @@ class sandbyActions(sandbyInitialize):
         dialog.set_default_response(gtk.RESPONSE_OK)
         response = dialog.run()
 
-        dialog.set_transient_for(self.glade.get_widget("main_window"))
+        dialog.set_transient_for(self.glade.get_object("main_window"))
         dialog.set_property('skip-taskbar-hint', True)
 
         if response == gtk.RESPONSE_OK:
@@ -2242,7 +2240,7 @@ class sandbyActions(sandbyInitialize):
                                      gtk.STOCK_SAVE, gtk.RESPONSE_OK))
        dialog.set_default_response(gtk.RESPONSE_OK)
 
-       dialog.set_transient_for(self.glade.get_widget("main_window"))
+       dialog.set_transient_for(self.glade.get_object("main_window"))
        dialog.set_property('skip-taskbar-hint', True)
 
        dialog.set_current_name(os.path.basename(self.database_filename) + ".csv")
@@ -2290,10 +2288,10 @@ class sandbyActions(sandbyInitialize):
        self.cur.execute("Select * FROM 'meta'")
        row = self.cur.fetchone()
 
-       self.glade.get_widget("entry1").set_text(row[1])
-       self.glade.get_widget("entry2").set_text(row[2])
-       self.glade.get_widget("entry3").set_text(row[3])
-       self.glade.get_widget("label5").set_text(row[0])
+       self.glade.get_object("entry1").set_text(row[1])
+       self.glade.get_object("entry2").set_text(row[2])
+       self.glade.get_object("entry3").set_text(row[3])
+       self.glade.get_object("label5").set_text(row[0])
        
        if os.name == 'nt':
            filenameprint = self.database_filename
@@ -2302,12 +2300,12 @@ class sandbyActions(sandbyInitialize):
 
        self.main_window.set_title(row[1] + " (" +  filenameprint + ")" + ' - Sandby Moth Recorder')
 
-       self.glade.get_widget("label16").set_text(str(os.path.basename(self.database_filename)))
-       self.glade.get_widget("label17").set_text(str(os.path.getsize(self.database_filename)/1024) + "KB (" + str(os.path.getsize(self.database_filename)) + " bytes)")
+       self.glade.get_object("label16").set_text(str(os.path.basename(self.database_filename)))
+       self.glade.get_object("label17").set_text(str(os.path.getsize(self.database_filename)/1024) + "KB (" + str(os.path.getsize(self.database_filename)) + " bytes)")
 
-       self.glade.get_widget("label26").set_text(str(os.path.dirname(self.database_filename)))
-       self.glade.get_widget("label27").set_text(time.ctime(os.path.getmtime(self.database_filename)))
-       self.glade.get_widget("label13").set_text(time.ctime(os.path.getatime(self.database_filename)))
+       self.glade.get_object("label26").set_text(str(os.path.dirname(self.database_filename)))
+       self.glade.get_object("label27").set_text(time.ctime(os.path.getmtime(self.database_filename)))
+       self.glade.get_object("label13").set_text(time.ctime(os.path.getatime(self.database_filename)))
 
      # track the fullsceen state
     def on_window_state_change(self, widget, event, *args):
@@ -2319,36 +2317,36 @@ class sandbyActions(sandbyInitialize):
      # fullscreen mode switchero
     def switch_fullscreen(self, widget):
         if self.window_in_fullscreen:
-            label = self.glade.get_widget("menuitem12").get_child()
+            label = self.glade.get_object("menuitem12").get_child()
             label.set_text("Fullscreen")
             img = gtk.image_new_from_stock(gtk.STOCK_FULLSCREEN, gtk.ICON_SIZE_MENU)
-            self.glade.get_widget("menuitem12").set_image(img)
-            self.glade.get_widget("main_window").unfullscreen ()
+            self.glade.get_object("menuitem12").set_image(img)
+            self.glade.get_object("main_window").unfullscreen ()
         else:
-            label = self.glade.get_widget("menuitem12").get_child()
+            label = self.glade.get_object("menuitem12").get_child()
             label.set_text("Leave Fullscreen")
             img = gtk.image_new_from_stock(gtk.STOCK_LEAVE_FULLSCREEN, gtk.ICON_SIZE_MENU)
-            self.glade.get_widget("menuitem12").set_image(img)
-            self.glade.get_widget("main_window").fullscreen ()
+            self.glade.get_object("menuitem12").set_image(img)
+            self.glade.get_object("main_window").fullscreen ()
 
 
      # toolbar switchero
     def switch_toolbar(self, widget):
-        if self.glade.get_widget("menuitem11").get_active() == True:
-            self.glade.get_widget("toolbar1").show()
+        if self.glade.get_object("menuitem11").get_active() == True:
+            self.glade.get_object("toolbar1").show()
         else:
-            if self.glade.get_widget("togglebutton1").get_active():
-                self.glade.get_widget("togglebutton1").set_active(False)
-                self.glade.get_widget("calendar_window").hide()
+            if self.glade.get_object("togglebutton1").get_active():
+                self.glade.get_object("togglebutton1").set_active(False)
+                self.glade.get_object("calendar_window").hide()
 
-            self.glade.get_widget("toolbar1").hide()
+            self.glade.get_object("toolbar1").hide()
 
      # statusbar switchero
     def switch_statusbar(self, widget):
-        if self.glade.get_widget("menuitem14").get_active() == True:
-            self.glade.get_widget("statusbar1").show()
+        if self.glade.get_object("menuitem14").get_active() == True:
+            self.glade.get_object("statusbar1").show()
         else:
-            self.glade.get_widget("statusbar1").hide()
+            self.glade.get_object("statusbar1").hide()
 
      # open up the browser and send it to our address
     def on_url(d, link, data):
